@@ -42,7 +42,17 @@ object CosmosBuild extends Build with StandardLibraries {
   ).settings(
     libraryDependencies ++= Seq(
     ) ++ Libs.akka
-  ) aggregate (preprocessing, processing)
+  ) aggregate (core, preprocessing, processing)
+
+
+  lazy val core = Project(
+    id="cosmos-core",
+    base = file("core"),
+    settings = Project.defaultSettings ++
+      sharedSettings
+  ).settings(
+    name := "cosmos-core"
+  )
 
 
   lazy val preprocessing = Project(
@@ -51,7 +61,7 @@ object CosmosBuild extends Build with StandardLibraries {
     settings = Project.defaultSettings ++
       sharedSettings
   ).settings(
-    name := "commons-preprocessing",
+    name := "cosmos-preprocessing",
     libraryDependencies ++= Seq(
     )
   )
@@ -63,9 +73,9 @@ object CosmosBuild extends Build with StandardLibraries {
     settings = Project.defaultSettings ++
       sharedSettings
   ).settings(
-    name := "commons-processing",
+    name := "cosmos-processing",
     libraryDependencies ++= Seq(
-    )
-  ).dependsOn(preprocessing)
+    ) ++ Libs.akka
+  ).dependsOn(core, preprocessing)
 
 }
