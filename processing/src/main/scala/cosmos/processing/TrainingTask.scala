@@ -13,7 +13,7 @@ class TrainingTask(val id: TaskId, cassie: ActorRef, preprocessor: ActorRef, mod
   import TaskOp._
 
   private val taskOps = (task1 _) +> (task2 _)
-  taskOps.init("My name is neeraj")
+  taskOps.init("Hello World")
 
   private var isCompleted = false
 

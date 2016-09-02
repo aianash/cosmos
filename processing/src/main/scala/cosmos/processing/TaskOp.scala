@@ -44,18 +44,23 @@ private[processing] class ChainedTaskOp[From, Middle, To](nested: TaskOp[From, M
 
 private[processing] class StandaloneTaskOp[From, To](op: From => Future[To]) extends TaskOp[From, To] {
 
-  private var param: From = _
+  private var param: Option[From] = None
 
   def init(from: From): Unit = {
-    param = from
+    param = Some(from)
   }
 
-  def forward(implicit ec: ExecutionContext) =
-    op(param) map { x =>
-      (Some(x), OpCompleted)
-    } recover {
-      case ex: Exception => (None, OpFailed)
-    }
+  def forward(implicit ec: ExecutionContext) = param match {
+    case Some(p) =>
+      op(p) map { x =>
+        (Some(x), OpCompleted)
+      } recover {
+        case ex: Exception => (None, OpFailed)
+      }
+
+    case None => Future.successful(None -> OpCompleted)
+
+  }
 
 }
 
