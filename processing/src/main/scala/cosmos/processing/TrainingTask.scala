@@ -1,21 +1,38 @@
 package cosmos.processing
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.ActorRef
 
 import cosmos.core.task._
 
-class TrainingTask(val id: TaskId, cassieclient: ActorRef, preprocessor: ActorRef, modeltrainer: ActorRef) extends Task {
 
-  var i = 1
+class TrainingTask(val id: TaskId, cassie: ActorRef, preprocessor: ActorRef, modeltrainer: ActorRef) extends Task {
 
-  def hasNext =
-    if(i < 5) {
-      i = i + 1
-      true
-    } else false
+  import TaskOp._
 
-  def next = Future.successful(TaskCompleted)
+  private val taskOps = (task1 _) +> (task2 _)
+  taskOps.init("My name is neeraj")
+
+  private var isCompleted = false
+
+  def next = taskOps.forward map {
+    case (None, OpCompleted)    => TaskRemaining
+    case (Some(_), OpCompleted) => TaskCompleted
+    case (_, OpFailed)          => TaskFailed
+  } recover {
+    case ex: Exception => TaskFailed
+  }
+
+  def task1(a: String) = Future.successful {
+    a.length
+  }
+
+  def task2(b: Int) = Future.successful {
+    b == 0
+  }
 
 }
+
+
