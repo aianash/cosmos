@@ -1,21 +1,35 @@
 package cosmos.processing
 
+import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
+import akka.util.Timeout
+
+import aianonymous.commons.core.protocols._, Implicits._
+import aianonymous.commons.events._
 
 import cosmos.core.task._
+import cosmos.preprocessing._
 
 
-class TrainingTask(val id: TaskId, cassie: ActorRef, preprocessor: ActorRef, modeltrainer: ActorRef) extends Task {
+case class TrainingTask(
+    val id         : TaskId,
+    tokenId        : Long,
+    pageId         : Long,
+    startTime      : Long,
+    endTime        : Long,
+    system         : ActorSystem,
+    cassie         : ActorRef,
+    eventprocessor : ActorRef,
+    modeltrainer   : ActorRef
+  ) extends Task {
 
   import TaskOp._
 
-  private val taskOps = (task1 _) +> (task2 _)
-  taskOps.init("Hello World")
-
-  private var isCompleted = false
+  private val taskOps = (fetchEvents _) +> (processEvents _) +> (trainModel _) +> (presistResult _)
+  taskOps.init(Unit)
 
   def next = taskOps.forward map {
     case (None, OpCompleted)    => TaskRemaining
@@ -25,14 +39,24 @@ class TrainingTask(val id: TaskId, cassie: ActorRef, preprocessor: ActorRef, mod
     case ex: Exception => TaskFailed
   }
 
-  def task1(a: String) = Future.successful {
-    a.length
+  def fetchEvents(a: Unit): Future[Seq[PageEvents]] = {
+    implicit val timeout = Timeout(2 seconds)
+    cassie ?= GetEvents(tokenId, pageId, startTime, endTime)
   }
 
-  def task2(b: Int) = Future.successful {
-    b == 0
+  def processEvents(events: Seq[PageEvents]): Future[String] = {
+    implicit val timeout = Timeout(2 seconds)
+    eventprocessor ?= ProcessEvents(events)
+  }
+
+  def trainModel(inputfile: String): Future[String] = {
+    implicit val timeout = Timeout(2 seconds)
+    modeltrainer ?= TrainModel(inputfile)
+  }
+
+  def presistResult(outputfile: String): Future[Boolean] = {
+    implicit val timeout = Timeout(2 seconds)
+    cassie ?= PersistResult(outputfile)
   }
 
 }
-
-

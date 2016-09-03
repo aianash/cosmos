@@ -2,9 +2,6 @@ import sbt._
 import sbt.Classpaths.publishTask
 import Keys._
 
-import com.typesafe.sbt.SbtMultiJvm
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.{ MultiJvm, extraOptions, jvmOptions, scalatestOptions, multiNodeExecuteTests, multiNodeJavaName, multiNodeHostsFileName, multiNodeTargetDirName, multiTestOptions }
-
 import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
@@ -63,7 +60,11 @@ object CosmosBuild extends Build with StandardLibraries {
   ).settings(
     name := "cosmos-preprocessing",
     libraryDependencies ++= Seq(
-    )
+      "com.aianonymous" %% "cassie-events" % "0.1.0"
+    ) ++ Libs.akka
+      ++ Libs.akkaCluster
+      ++ Libs.commonsCore
+      ++ Libs.commonsEvents
   )
 
 
