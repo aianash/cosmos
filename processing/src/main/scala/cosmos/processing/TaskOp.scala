@@ -10,7 +10,19 @@ private[processing] case object OpFailed extends OpStatus
 
 
 /**
+ * To chain functions of form
+ * A => Future[B], B => Future[C], C => Future[D] etc
  *
+ * It chains the functions and executes one function from left
+ * when .forward method is called and returns the future.
+ *
+ * Usage
+ * -----
+ * def op1(a: Int): Future[String]
+ * def op2(b: String): Future[Boolean]
+ *
+ * val taskops = (op1 _) +> (op2 _)
+ * taskops.init(1)
  */
 private[processing] sealed trait TaskOp[From, To] {
   def init(param: From): Unit
@@ -28,15 +40,15 @@ private[processing] class ChainedTaskOp[From, Middle, To](nested: TaskOp[From, M
   def forward(implicit ec: ExecutionContext) = param match {
     case Some(d) =>
       op(d) map { res =>
-        (Some(res), OpCompleted)
+        Some(res) -> OpCompleted
       } recover {
-        case ex: Exception => (None, OpFailed)
+        case ex: Exception => None -> OpFailed
       }
 
     case None =>
       nested.forward map { case (res, status) =>
         param = res
-        (None, status)
+        None -> status
       }
   }
 
@@ -53,13 +65,13 @@ private[processing] class StandaloneTaskOp[From, To](op: From => Future[To]) ext
   def forward(implicit ec: ExecutionContext) = param match {
     case Some(p) =>
       op(p) map { x =>
-        (Some(x), OpCompleted)
+        Some(x) -> OpCompleted
       } recover {
-        case ex: Exception => (None, OpFailed)
+        case ex: Exception => None -> OpFailed
       }
 
-    case None => Future.successful(None -> OpCompleted)
-
+    case None =>
+      Future.successful(None -> OpCompleted)
   }
 
 }
