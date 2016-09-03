@@ -8,23 +8,14 @@ import akka.routing.FromConfig
 import akka.util.Timeout
 
 import aianonymous.commons.core.protocols._, Implicits._
-import aianonymous.commons.events.PageEvents
 
 import cassie.events.EventService
 
-/**
- * Protocols to communicate with Cassie
- */
-sealed trait CassieProtocols
-case class GetEvents(tokenId: Long, pageId: Long, startTime: Long, endTime: Long) extends CassieProtocols with Replyable[Seq[PageEvents]]
-case class GetEventsCount(tokenId: Long, pageId: Long, startTime: Long, endTime: Long) extends CassieProtocols with Replyable[Long]
-case class PersistResult(outfile: String) extends CassieProtocols with Replyable[Boolean]
-/**
- * Cassie actor which uses EventService to fetch the events
- */
+
 class Cassie extends Actor with ActorLogging {
 
   import context.dispatcher
+  import protocols._
 
   val eventservice = context.actorOf(FromConfig.props(), name = "event-service")
 
@@ -45,8 +36,6 @@ class Cassie extends Actor with ActorLogging {
 }
 
 object Cassie {
-
-  final val name = "cassie"
 
   def props = Props(classOf[Cassie])
 

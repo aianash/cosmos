@@ -11,7 +11,7 @@ import aianonymous.commons.core.protocols._, Implicits._
 import aianonymous.commons.events._
 
 import cosmos.core.task._
-import cosmos.preprocessing._
+import cosmos.preprocessing.protocols._
 
 
 case class TrainingTask(
