@@ -2,17 +2,22 @@ import sbt._
 import sbt.Classpaths.publishTask
 import Keys._
 
-import com.typesafe.sbt.SbtScalariform
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-import com.typesafe.sbt.SbtStartScript
+import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 
 import sbtassembly.AssemblyPlugin.autoImport._
 
+import com.typesafe.sbt.SbtNativePackager._, autoImport._
+import com.typesafe.sbt.packager.Keys._
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd, CmdLike}
+
 import com.aianonymous.sbt.standard.libraries.StandardLibraries
+
+import com.typesafe.sbt.packager.docker.DockerPlugin
 
 
 object CosmosBuild extends Build with StandardLibraries {
+
+  lazy val makeScript = TaskKey[Unit]("make-script", "make bash script in local directory to run main classes")
 
   def sharedSettings = Seq(
     organization := "com.aianonymous",
@@ -31,15 +36,12 @@ object CosmosBuild extends Build with StandardLibraries {
   ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 
-  def cosmos = Project(
+  lazy val cosmos = Project(
     id = "cosmos",
     base = file("."),
     settings = Project.defaultSettings ++
       sharedSettings
-  ).settings(
-    libraryDependencies ++= Seq(
-    ) ++ Libs.akka
-  ) aggregate (core, preprocessing, processing)
+  ).aggregate(core, preprocessing, processing, service)
 
 
   lazy val core = Project(
@@ -60,11 +62,11 @@ object CosmosBuild extends Build with StandardLibraries {
   ).settings(
     name := "cosmos-preprocessing",
     libraryDependencies ++= Seq(
-      "com.aianonymous" %% "cassie-events" % "0.1.0"
     ) ++ Libs.akka
       ++ Libs.akkaCluster
       ++ Libs.commonsCore
       ++ Libs.commonsEvents
+      ++ Libs.cassieCore
   )
 
 
@@ -77,6 +79,38 @@ object CosmosBuild extends Build with StandardLibraries {
     name := "cosmos-processing",
     libraryDependencies ++= Seq(
     ) ++ Libs.akka
+      ++ Libs.cassieCore
   ).dependsOn(core, preprocessing)
+
+
+  lazy val service = Project(
+    id = "cosmos-service",
+    base = file("service"),
+    settings = Project.defaultSettings ++
+      sharedSettings
+  )
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
+  .settings(
+    name := "cosmos-service",
+    mainClass in Compile := Some("cosmos.service.CosmosServer"),
+    dockerExposedPorts := Seq(4849),
+    dockerEntrypoint := Seq("sh", "-c",
+                            """export COSMOS_HOST=`ifdata -pa eth0` && echo $COSMOS_HOST && \
+                            |  export COSMOS_PORT=4849 && \
+                            |  bin/cosmos-service -Dakka.cluster.roles.0=cosmos-service $*""".stripMargin
+                            ),
+    dockerRepository := Some("aianonymous"),
+    dockerBaseImage := "aianonymous/baseimage",
+    dockerCommands ++= Seq(
+      Cmd("USER", "root")
+    ),
+    libraryDependencies ++= Seq(
+    ) ++ Libs.akka
+      ++ Libs.microservice,
+  makeScript <<= (stage in Universal, stagingDirectory in Universal, baseDirectory in ThisBuild, streams) map { (_, dir, cwd, streams) =>
+      var path = dir / "bin" / "cosmos-service"
+      sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-service"), cwd) ! streams.log
+    }
+  ).dependsOn(processing)
 
 }
