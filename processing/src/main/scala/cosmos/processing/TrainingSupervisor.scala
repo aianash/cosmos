@@ -4,7 +4,6 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.routing.FromConfig
 
 import cosmos.preprocessing._
-import cosmos.core.task._
 
 /** Supervisor for traing requests
   */
@@ -33,8 +32,15 @@ class TrainingSupervisor extends Actor with ActorLogging {
   def receive = {
 
     /* Message for status of a task from schedular */
-    case (t: Task, ts: String) =>
-      log.info("task with taskid {} {}", t.id.uuid, ts)
+    case (t: TrainingTask, ts: String) =>
+      ts match {
+        case "Completed" =>
+          log.info("task for tokenid {} and pageid {} with taskid {} {}", t.tokenId, t.pageId, t.id.uuid, ts)
+        case "Failed" =>
+          log.warning("task for tokenid {} and pageid {} with taskid {} {}", t.tokenId, t.pageId, t.id.uuid, ts)
+        case _ =>
+          log.warning("task status for tokenid {} and pageid {} with taskid {} is unknown", t.tokenId, t.pageId, t.id.uuid)
+      }
 
   }
 

@@ -31,11 +31,13 @@ class TrainingSchedular extends Actor with ActorLogging {
 
     case NewTask(task: Task) =>
       taskQueue.add(task)
-      if(runMap.size < maxTaskRuns) execute
+      if(runMap.size < maxTaskRuns) execute()
 
   }
 
-  private def execute: Unit = {
+  private def execute(): Unit = {
+
+    if(!(taskQueue.size > 0)) return
 
     val task = taskQueue.poll
     runMap.put(task.id.uuid, task)
@@ -43,15 +45,15 @@ class TrainingSchedular extends Actor with ActorLogging {
       case TaskRemaining =>
         runMap.remove(task.id.uuid)
         taskQueue.add(task)
-        execute
+        execute()
       case TaskCompleted =>
         runMap.remove(task.id.uuid)
         supervisor ! (task, "Completed")
-        if(taskQueue.size > 0) execute
+        execute()
       case TaskFailed =>
         runMap.remove(task.id.uuid)
         supervisor ! (task, "Failed")
-        if(taskQueue.size > 0) execute
+        execute()
     }
 
   }
