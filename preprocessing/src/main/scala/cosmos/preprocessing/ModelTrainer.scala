@@ -8,9 +8,18 @@ class ModelTrainer extends Actor with ActorLogging {
   import protocols._
 
   def receive = {
+
     case TrainModel(infile) => sender() ! "/tmp/output.dat"
 
     case _ =>
+
   }
+
+}
+
+
+object ModelTrainer {
+
+  def props = Props(classOf[ModelTrainer])
 
 }

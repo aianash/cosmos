@@ -13,9 +13,18 @@ class EventProcessor extends Actor with ActorLogging {
   import protocols._
 
   def receive = {
+
     case ProcessEvents(events: Seq[PageEvents]) => sender() ! "/tmp/input.dat"
 
     case _ =>
+
   }
+
+}
+
+
+object EventProcessor {
+
+  def props = Props(classOf[EventProcessor])
 
 }
