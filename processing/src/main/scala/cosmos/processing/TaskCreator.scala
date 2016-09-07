@@ -27,9 +27,7 @@ class TaskCreator(eventPersistent: ActorRef, eventProcessor: ActorRef,
   private val settings = TrainingSettings(context.system)
 
   // TODO: handle for all different pageid tasks
-  private var startTime = 0L
-  private var endTime = 0L
-  private var retainStTime = false
+  private var lastUptoTime = System.currentTimeMillis
   private val tokenId = 123456L
   private val pageId = 2L
 
@@ -41,7 +39,7 @@ class TaskCreator(eventPersistent: ActorRef, eventProcessor: ActorRef,
   context watch schedular
   context watch uuid
 
-  context.system.scheduler.schedule(settings.CREATETASK_START_DELAY,
+  context.system.scheduler.schedule(settings.CREATETASK_INTERVAL,
                                     settings.CREATETASK_INTERVAL,
                                     self,
                                     CreateTask)
@@ -49,35 +47,37 @@ class TaskCreator(eventPersistent: ActorRef, eventProcessor: ActorRef,
   def receive = {
 
     case CreateTask =>
-      if(retainStTime) {
-        retainStTime = false
-        endTime = System.currentTimeMillis
-      } else {
-        startTime = endTime
-        endTime = System.currentTimeMillis
-      }
+      var endTime = System.currentTimeMillis
 
       implicit val timeout = Timeout(3 seconds)
-      (eventPersistent ?= GetEventsCount(tokenId, pageId, startTime, endTime)) andThen {
-        case Success(count) =>
-          if(count >= settings.CREATETASK_MIN_EVENT_COUNT) {
-            (uuid ?= NextId("trainingtaskid")) foreach {
-              case Some(id) =>
-                val task = new TrainingTask(TaskId(id), tokenId, pageId, startTime, endTime,
-                context.system, eventPersistent, eventProcessor, modelTrainer)
-                schedular ! NewTask(task)
-                log.info("Task with taskid {} created for interval ({}, {})", id, startTime, endTime)
+      val cntNTimeF =
+      (eventPersistent ?= GetEventsCount(tokenId, pageId, lastUptoTime, endTime))
+        .map(_ -> lastUptoTime)
+        .andThen {
+          case Success((count, startTime)) =>
+          if(count >= settings.CREATETASK_MIN_EVENT_COUNT) lastUptoTime = endTime
+          else log.info("Event count criteria not fulfilled for task creation of interval ({}, {}). Count is {}",
+              startTime, endTime, count)
 
-              case None =>
-                log.warning("Failed to get task id for task creation of interval ({}, {})", startTime, endTime)
-            }
-          } else {
-            log.info("Event count criteria not fulfilled for task creation of interval ({}, {})", startTime, endTime)
-            retainStTime = true
-          }
+          case Failure(ex) =>
+            log.warning("Failed to get event count of interval ({}, {}) for task creation", lastUptoTime, endTime)
+            lastUptoTime = endTime;
+        }
 
-        case Failure(count) =>
-          log.warning("Failed to get event count for task creation of interval ({}, {})", startTime, endTime)
+      for {
+        (count, startTime) <- cntNTimeF
+        uuidO <- (uuid ?= NextId("trainingtaskid")) if count >= settings.CREATETASK_MIN_EVENT_COUNT
+      } {
+        uuidO match {
+          case Some(uuid) =>
+            val task = new TrainingTask(TaskId(uuid), tokenId, pageId, startTime, endTime,
+            context.system, eventPersistent, eventProcessor, modelTrainer)
+            schedular ! NewTask(task)
+            log.info("Task with taskid {} created for interval ({}, {})", uuid, startTime, endTime)
+
+          case None =>
+            log.warning("Failed to get taskid for task creation of interval ({}, {})", startTime, endTime)
+        }
       }
   }
 
@@ -92,4 +92,3 @@ object TaskCreator {
   case object CreateTask
 
 }
-

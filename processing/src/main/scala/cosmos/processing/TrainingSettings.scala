@@ -16,8 +16,7 @@ class TrainingSettings(cfg: Config) extends Extension {
   }
 
   private[processing] val CREATETASK_MIN_EVENT_COUNT = config.getInt("cosmos.processing.createtask.min-event-count")
-  private[processing] val CREATETASK_START_DELAY = config.getInt("cosmos.processing.createtask.start-delay").milliseconds
-  private[processing] val CREATETASK_INTERVAL = config.getInt("cosmos.processing.createtask.task-interval").milliseconds
+  private[processing] val CREATETASK_INTERVAL = config.getLong("cosmos.processing.createtask.task-interval").milliseconds
 
   private[processing] val MAX_RUNNING_TASK = config.getInt("cosmos.processing.schedular.max-running-task")
   private[processing] val SERVICEID = config.getLong("cosmos.serviceid")

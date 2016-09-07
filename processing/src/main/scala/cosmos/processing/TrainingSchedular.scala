@@ -35,27 +35,25 @@ class TrainingSchedular extends Actor with ActorLogging {
 
   }
 
-  private def execute(): Unit = {
-
-    if(!(taskQueue.size > 0)) return
-
-    val task = taskQueue.poll
-    runMap.put(task.id.uuid, task)
-    task.next map {
-      case TaskRemaining =>
-        runMap.remove(task.id.uuid)
-        taskQueue.add(task)
-        execute()
-      case TaskCompleted =>
-        runMap.remove(task.id.uuid)
-        supervisor ! (task, "Completed")
-        execute()
-      case TaskFailed =>
-        runMap.remove(task.id.uuid)
-        supervisor ! (task, "Failed")
-        execute()
+  private def execute() {
+    if(!taskQueue.isEmpty) {
+      val task = taskQueue.poll
+      runMap.put(task.id.uuid, task)
+      task.next foreach {
+        case TaskRemaining =>
+          runMap.remove(task.id.uuid)
+          taskQueue.add(task)
+          execute()
+        case TaskCompleted =>
+          runMap.remove(task.id.uuid)
+          supervisor ! (task, "Completed")
+          execute()
+        case TaskFailed =>
+          runMap.remove(task.id.uuid)
+          supervisor ! (task, "Failed")
+          execute()
+      }
     }
-
   }
 
 }
