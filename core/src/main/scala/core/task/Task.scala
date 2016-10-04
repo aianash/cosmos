@@ -2,14 +2,14 @@ package cosmos.core.task
 
 import scala.concurrent.Future
 
-case class TaskId(uuid: Long)
+private[cosmos] case class TaskId(uuid: Long)
 
-sealed trait TaskStatus
-case object TaskCompleted extends TaskStatus
-case object TaskRemaining extends TaskStatus
-case object TaskFailed extends TaskStatus
+private[cosmos] sealed trait TaskStatus
+private[cosmos] case object TaskCompleted extends TaskStatus
+private[cosmos] case object TaskRemaining extends TaskStatus
+private[cosmos] case object TaskFailed extends TaskStatus
 
-trait Task {
+private[cosmos] trait Task {
   val id: TaskId
   def next: Future[TaskStatus]
 }
