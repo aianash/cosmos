@@ -2,7 +2,6 @@ package cosmos.service
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
@@ -29,6 +28,7 @@ case class TrainingTask(
   ) extends Task {
 
   import TaskOp._
+  import system.dispatcher
 
   private val taskOps = (fetchEvents _) +> (processEvents _) +> (trainModel _) +> (presistResult _)
   taskOps.init(Unit)

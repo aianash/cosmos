@@ -70,8 +70,8 @@ class TaskCreator(eventPersistent: ActorRef, eventProcessor: ActorRef,
       } {
         uuidO match {
           case Some(uuid) =>
-            val task = new TrainingTask(TaskId(uuid), tokenId, pageId, startTime, endTime,
-            context.system, eventPersistent, eventProcessor, modelTrainer)
+            val task = TrainingTask(TaskId(uuid), tokenId, pageId, startTime, endTime,
+                                    context.system, eventPersistent, eventProcessor, modelTrainer)
             schedular ! NewTask(task)
             log.info("Task with taskid {} created for interval ({}, {})", uuid, startTime, endTime)
 
