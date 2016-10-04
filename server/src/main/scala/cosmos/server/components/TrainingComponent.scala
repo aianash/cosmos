@@ -1,4 +1,4 @@
-package cosmos.service.components
+package cosmos.server.components
 
 import akka.actor.ActorSystem
 
