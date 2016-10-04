@@ -41,7 +41,7 @@ object CosmosBuild extends Build with StandardLibraries {
     base = file("."),
     settings = Project.defaultSettings ++
       sharedSettings
-  ).aggregate(core, preprocessing, processing, server)
+  ).aggregate(core, preprocessing, service, server)
 
 
   lazy val core = Project(
@@ -70,13 +70,13 @@ object CosmosBuild extends Build with StandardLibraries {
   )
 
 
-  lazy val processing = Project(
-    id = "cosmos-processing",
-    base = file("processing"),
+  lazy val service = Project(
+    id = "cosmos-service",
+    base = file("service"),
     settings = Project.defaultSettings ++
       sharedSettings
   ).settings(
-    name := "cosmos-processing",
+    name := "cosmos-service",
     libraryDependencies ++= Seq(
     ) ++ Libs.akka
       ++ Libs.cassieCore
@@ -111,6 +111,6 @@ object CosmosBuild extends Build with StandardLibraries {
       var path = dir / "bin" / "cosmos-server"
       sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-server"), cwd) ! streams.log
     }
-  ).dependsOn(processing)
+  ).dependsOn(service)
 
 }
