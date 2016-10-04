@@ -1,4 +1,4 @@
-package cosmos.processing
+package cosmos.service
 
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
@@ -13,7 +13,7 @@ import aianonymous.commons.core.services.{UUIDGenerator, NextId}
 import cassie.core.protocols.events._
 
 import cosmos.core.task._
-import cosmos.processing.protocols._
+import cosmos.service.protocols._
 
 
 /** Traing task creator

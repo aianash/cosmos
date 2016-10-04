@@ -1,12 +1,12 @@
-package cosmos.processing
+package cosmos.service
 
 import scala.concurrent.{Future, ExecutionContext}
 
 import cosmos.core.task._
 
-private[processing] sealed trait OpStatus
-private[processing] case object OpCompleted extends OpStatus
-private[processing] case object OpFailed extends OpStatus
+private[service] sealed trait OpStatus
+private[service] case object OpCompleted extends OpStatus
+private[service] case object OpFailed extends OpStatus
 
 
 /**
@@ -24,12 +24,12 @@ private[processing] case object OpFailed extends OpStatus
  * val taskops = (op1 _) +> (op2 _)
  * taskops.init(1)
  */
-private[processing] sealed trait TaskOp[From, To] {
+private[service] sealed trait TaskOp[From, To] {
   def init(param: From): Unit
   def forward(implicit ec: ExecutionContext): Future[(Option[To], OpStatus)]
 }
 
-private[processing] class ChainedTaskOp[From, Middle, To](nested: TaskOp[From, Middle], op: Middle => Future[To]) extends TaskOp[From, To]  {
+private[service] class ChainedTaskOp[From, Middle, To](nested: TaskOp[From, Middle], op: Middle => Future[To]) extends TaskOp[From, To]  {
 
   private var param: Option[Middle] = None
 
@@ -54,7 +54,7 @@ private[processing] class ChainedTaskOp[From, Middle, To](nested: TaskOp[From, M
 
 }
 
-private[processing] class StandaloneTaskOp[From, To](op: From => Future[To]) extends TaskOp[From, To] {
+private[service] class StandaloneTaskOp[From, To](op: From => Future[To]) extends TaskOp[From, To] {
 
   private var param: Option[From] = None
 
@@ -76,7 +76,7 @@ private[processing] class StandaloneTaskOp[From, To](op: From => Future[To]) ext
 
 }
 
-private[processing] object TaskOp {
+private[service] object TaskOp {
 
   implicit class StandaloneTaskOpOps[From, Middle](op1: From => Future[Middle]) {
     def +>[To](op2: Middle => Future[To]) = new ChainedTaskOp[From, Middle, To](new StandaloneTaskOp(op1), op2)
