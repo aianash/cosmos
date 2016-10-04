@@ -1,4 +1,4 @@
-package cosmos.processing
+package cosmos.service
 
 import scala.concurrent.duration._
 
@@ -15,12 +15,12 @@ class TrainingSettings(cfg: Config) extends Extension {
     config
   }
 
-  private[processing] val CREATETASK_MIN_EVENT_COUNT = config.getInt("cosmos.processing.createtask.min-event-count")
-  private[processing] val CREATETASK_INTERVAL = config.getLong("cosmos.processing.createtask.task-interval").milliseconds
+  private[service] val CREATETASK_MIN_EVENT_COUNT = config.getInt("cosmos.service.createtask.min-event-count")
+  private[service] val CREATETASK_INTERVAL = config.getLong("cosmos.service.createtask.task-interval").milliseconds
 
-  private[processing] val MAX_RUNNING_TASK = config.getInt("cosmos.processing.schedular.max-running-task")
-  private[processing] val SERVICEID = config.getLong("cosmos.serviceid")
-  private[processing] val DATACENTERID = config.getLong("cosmos.datacenterid")
+  private[service] val MAX_RUNNING_TASK = config.getInt("cosmos.service.schedular.max-running-task")
+  private[service] val SERVICEID = config.getLong("cosmos.serviceid")
+  private[service] val DATACENTERID = config.getLong("cosmos.datacenterid")
 
 }
 

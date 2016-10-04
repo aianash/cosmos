@@ -1,4 +1,4 @@
-package cosmos.service
+package cosmos.server
 
 import com.typesafe.config.ConfigFactory
 

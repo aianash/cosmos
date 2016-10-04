@@ -1,4 +1,4 @@
-package cosmos.processing.protocols
+package cosmos.service.protocols
 
 import aianonymous.commons.core.protocols._
 

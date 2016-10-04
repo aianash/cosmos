@@ -1,4 +1,4 @@
-package cosmos.processing
+package cosmos.service
 
 import scala.collection.JavaConversions._
 

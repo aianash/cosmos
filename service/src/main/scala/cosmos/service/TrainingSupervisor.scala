@@ -1,4 +1,4 @@
-package cosmos.processing
+package cosmos.service
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.routing.FromConfig

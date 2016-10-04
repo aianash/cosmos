@@ -41,7 +41,7 @@ object CosmosBuild extends Build with StandardLibraries {
     base = file("."),
     settings = Project.defaultSettings ++
       sharedSettings
-  ).aggregate(core, preprocessing, processing, service)
+  ).aggregate(core, preprocessing, service, server)
 
 
   lazy val core = Project(
@@ -70,34 +70,34 @@ object CosmosBuild extends Build with StandardLibraries {
   )
 
 
-  lazy val processing = Project(
-    id = "cosmos-processing",
-    base = file("processing"),
+  lazy val service = Project(
+    id = "cosmos-service",
+    base = file("service"),
     settings = Project.defaultSettings ++
       sharedSettings
   ).settings(
-    name := "cosmos-processing",
+    name := "cosmos-service",
     libraryDependencies ++= Seq(
     ) ++ Libs.akka
       ++ Libs.cassieCore
   ).dependsOn(core, preprocessing)
 
 
-  lazy val service = Project(
-    id = "cosmos-service",
-    base = file("service"),
+  lazy val server = Project(
+    id = "cosmos-server",
+    base = file("server"),
     settings = Project.defaultSettings ++
       sharedSettings
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(
-    name := "cosmos-service",
-    mainClass in Compile := Some("cosmos.service.CosmosServer"),
+    name := "cosmos-server",
+    mainClass in Compile := Some("cosmos.server.CosmosServer"),
     dockerExposedPorts := Seq(4849),
     dockerEntrypoint := Seq("sh", "-c",
                             """export COSMOS_HOST=`ifdata -pa eth0` && echo $COSMOS_HOST && \
                             |  export COSMOS_PORT=4849 && \
-                            |  bin/cosmos-service -Dakka.cluster.roles.0=cosmos-service $*""".stripMargin
+                            |  bin/cosmos-server -Dakka.cluster.roles.0=cosmos-server $*""".stripMargin
                             ),
     dockerRepository := Some("aianonymous"),
     dockerBaseImage := "aianonymous/baseimage",
@@ -108,9 +108,9 @@ object CosmosBuild extends Build with StandardLibraries {
     ) ++ Libs.akka
       ++ Libs.microservice,
   makeScript <<= (stage in Universal, stagingDirectory in Universal, baseDirectory in ThisBuild, streams) map { (_, dir, cwd, streams) =>
-      var path = dir / "bin" / "cosmos-service"
-      sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-service"), cwd) ! streams.log
+      var path = dir / "bin" / "cosmos-server"
+      sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-server"), cwd) ! streams.log
     }
-  ).dependsOn(processing)
+  ).dependsOn(service)
 
 }
