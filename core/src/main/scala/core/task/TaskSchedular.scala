@@ -1,4 +1,4 @@
-package cosmos.service
+package cosmos.core.task
 
 import scala.collection.JavaConversions._
 
@@ -11,7 +11,7 @@ import cosmos.core.task._
 
 /** Maintain training jobs
   */
-class TrainingSchedular extends Actor with ActorLogging {
+class TaskScheduler extends Actor with ActorLogging {
 
   import context.dispatcher
   import protocols._
@@ -59,8 +59,8 @@ class TrainingSchedular extends Actor with ActorLogging {
 }
 
 
-object TrainingSchedular {
+object TaskScheduler {
 
-  def props = Props(classOf[TrainingSchedular])
+  def props = Props(classOf[TaskScheduler])
 
 }
