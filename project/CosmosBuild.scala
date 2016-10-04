@@ -50,7 +50,10 @@ object CosmosBuild extends Build with StandardLibraries {
     settings = Project.defaultSettings ++
       sharedSettings
   ).settings(
-    name := "cosmos-core"
+    name := "cosmos-core",
+    libraryDependencies ++= Seq(
+    ) ++ Libs.akka
+      ++ Libs.commonsCore
   )
 
 

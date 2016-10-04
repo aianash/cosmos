@@ -13,7 +13,6 @@ import aianonymous.commons.core.services.{UUIDGenerator, NextId}
 import cassie.core.protocols.events._
 
 import cosmos.core.task._
-import cosmos.service.protocols._
 
 
 /** Traing task creator

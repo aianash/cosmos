@@ -6,25 +6,22 @@ import java.util.concurrent.{ConcurrentLinkedQueue, ConcurrentHashMap}
 
 import akka.actor.{Actor, ActorLogging, Props}
 
-import cosmos.core.task._
+import aianonymous.commons.core.protocols._, Implicits._
+
+private[cosmos] sealed trait TrainingSchedulerMessages
+private[cosmos] case class NewTask(task: Task) extends TrainingSchedulerMessages with Replyable[Boolean]
 
 
 /** Maintain training jobs
   */
-class TaskScheduler extends Actor with ActorLogging {
+private[cosmos] class TaskScheduler(maxTaskRuns: Int) extends Actor with ActorLogging {
 
   import context.dispatcher
-  import protocols._
-
-
-  private val settings = TrainingSettings(context.system)
 
   private val supervisor = context.parent
 
   private val taskQueue = new ConcurrentLinkedQueue[Task]
   private val runMap = new ConcurrentHashMap[Long, Task]
-
-  private val maxTaskRuns = settings.MAX_RUNNING_TASK
 
 
   def receive = {
@@ -59,8 +56,8 @@ class TaskScheduler extends Actor with ActorLogging {
 }
 
 
-object TaskScheduler {
+private[cosmos] object TaskScheduler {
 
-  def props = Props(classOf[TaskScheduler])
+  def props(maxTaskRuns: Int) = Props(classOf[TaskScheduler], maxTaskRuns)
 
 }

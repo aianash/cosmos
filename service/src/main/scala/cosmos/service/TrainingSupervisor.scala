@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.routing.FromConfig
 
 import cosmos.preprocessing._
+import cosmos.core.task.TaskScheduler
 
 /** Supervisor for traing requests
   */
@@ -19,7 +20,7 @@ class TrainingSupervisor extends Actor with ActorLogging {
   private val eventProcessor = context.actorOf(FromConfig.props(EventProcessor.props), "eventprocessor")
   private val modelTrainer = context.actorOf(FromConfig.props(ModelTrainer.props), "modeltrainer")
 
-  private val schedular = context.actorOf(TrainingSchedular.props, "schedular")
+  private val schedular = context.actorOf(TaskScheduler.props(settings.MAX_RUNNING_TASK), "schedular")
   private val taskCreator = context.actorOf(TaskCreator.props(eventPersistent, eventProcessor, modelTrainer, schedular), "taskCreator")
 
   context watch cassie
