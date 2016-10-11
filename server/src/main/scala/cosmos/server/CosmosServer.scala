@@ -15,7 +15,7 @@ object CosmosServer {
 
     val config = ConfigFactory.load("cosmos")
     val system = ActorSystem(config.getString("cosmos.actorSystem"), config)
-    Microservice(system).start(IndexedSeq(TrainingComponent))
+    Microservice(system).start(IndexedSeq(TrainingComponent, ActionGraphComponent))
 
   }
 

@@ -7,7 +7,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
 
 import aianonymous.commons.core.protocols._, Implicits._
-import aianonymous.commons.events._
+import aianash.commons.events._
 
 import cassie.core.protocols.events._
 
@@ -27,38 +27,42 @@ case class TrainingTask(
     modeltrainer    : ActorRef
   ) extends Task {
 
+  type From = Unit
+  type To = Boolean
+
   import TaskOp._
   import system.dispatcher
 
-  private val taskOps = (fetchEvents _) +> (processEvents _) +> (trainModel _) +> (presistResult _)
+  val taskOps = (todo1 _) +> (todo _)
   taskOps.init(Unit)
 
-  def next = taskOps.forward map {
-    case (None, OpCompleted)    => TaskRemaining
-    case (Some(_), OpCompleted) => TaskCompleted
-    case (_, OpFailed)          => TaskFailed
-  } recover {
-    case ex: Exception => TaskFailed
-  }
+  def todo1(a: Unit) =
+    Future(true)
 
-  def fetchEvents(a: Unit): Future[Seq[PageEvents]] = {
-    implicit val timeout = Timeout(2 seconds)
-    eventPersistent ?= GetEvents(tokenId, pageId, startTime, endTime)
-  }
+  def todo(a: Boolean) =
+    Future(true)
 
-  def processEvents(events: Seq[PageEvents]): Future[String] = {
-    implicit val timeout = Timeout(2 seconds)
-    eventprocessor ?= ProcessEvents(events)
-  }
+  // val taskOps = (fetchEvents _) +> (processEvents _) +> (trainModel _) +> (presistResult _)
+  // taskOps.init(Unit)
 
-  def trainModel(inputfile: String): Future[String] = {
-    implicit val timeout = Timeout(2 seconds)
-    modeltrainer ?= TrainModel(inputfile)
-  }
+  // def fetchEvents(a: Unit): Future[Seq[PageEvents]] = {
+  //   implicit val timeout = Timeout(2 seconds)
+  //   eventPersistent ?= GetEvents(tokenId, pageId, startTime, endTime)
+  // }
 
-  def presistResult(outputfile: String): Future[Boolean] = {
-    implicit val timeout = Timeout(2 seconds)
-    eventPersistent ?= PersistResult(outputfile)
-  }
+  // def processEvents(events: Seq[PageEvents]): Future[String] = {
+  //   implicit val timeout = Timeout(2 seconds)
+  //   eventprocessor ?= ProcessEvents(events)
+  // }
+
+  // def trainModel(inputfile: String): Future[String] = {
+  //   implicit val timeout = Timeout(2 seconds)
+  //   modeltrainer ?= TrainModel(inputfile)
+  // }
+
+  // def presistResult(outputfile: String): Future[Boolean] = {
+  //   implicit val timeout = Timeout(2 seconds)
+  //   eventPersistent ?= PersistResult(outputfile)
+  // }
 
 }

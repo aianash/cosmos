@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 
 import aianonymous.commons.microservice.Component
 
-import cosmos.processing.TrainingSupervisor
+import cosmos.service.TrainingSupervisor
 
 
 case object TrainingComponent extends Component {

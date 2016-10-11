@@ -41,7 +41,7 @@ object CosmosBuild extends Build with StandardLibraries {
     base = file("."),
     settings = Project.defaultSettings ++
       sharedSettings
-  ).aggregate(core, preprocessing, service, server)
+  ).aggregate(core, preprocessing, service, server, actiongraph)
 
 
   lazy val core = Project(
@@ -55,6 +55,32 @@ object CosmosBuild extends Build with StandardLibraries {
     ) ++ Libs.akka
       ++ Libs.commonsCore
   )
+
+
+  lazy val actiongraph = Project(
+    id = "cosmos-actiongraph",
+    base = file("actiongraph"),
+    settings = Project.defaultSettings ++
+      sharedSettings
+  )
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "cosmos-actiongraph",
+    libraryDependencies ++= Seq(
+    ) ++ Libs.akka
+      ++ Libs.akkaCluster
+      ++ Libs.commonsCore
+      ++ Libs.commonsEvents
+      ++ Libs.cassieCore
+      ++ Libs.scalaz
+      ++ Libs.mongodb,
+
+    makeScript <<= (stage in Universal, stagingDirectory in Universal, baseDirectory in ThisBuild, streams) map { (_, dir, cwd, streams) =>
+      var path = dir / "bin" / "cosmos-actiongraph"
+      sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-actiongraph"), cwd) ! streams.log
+    }
+
+  ) dependsOn(core)
 
 
   lazy val preprocessing = Project(
@@ -110,10 +136,11 @@ object CosmosBuild extends Build with StandardLibraries {
     libraryDependencies ++= Seq(
     ) ++ Libs.akka
       ++ Libs.microservice,
-  makeScript <<= (stage in Universal, stagingDirectory in Universal, baseDirectory in ThisBuild, streams) map { (_, dir, cwd, streams) =>
+
+    makeScript <<= (stage in Universal, stagingDirectory in Universal, baseDirectory in ThisBuild, streams) map { (_, dir, cwd, streams) =>
       var path = dir / "bin" / "cosmos-server"
       sbt.Process(Seq("ln", "-sf", path.toString, "cosmos-server"), cwd) ! streams.log
     }
-  ).dependsOn(service)
+  ).dependsOn(service, actiongraph)
 
 }
